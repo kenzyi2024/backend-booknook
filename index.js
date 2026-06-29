@@ -62,20 +62,14 @@ app.post('/api/books', async (req, res) => {
 // <-- NEW PUT ROUTE: Update an existing book in the database -->
 app.put('/api/books/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // Find the book by its ID and update it with the new data from React
-    // { new: true } tells MongoDB to send back the newly updated book, not the old one
-    const updatedBook = await Book.findByIdAndUpdate(id, req.body, { returnDocument: 'after' });
-    
-    if (!updatedBook) {
-      return res.status(404).json({ message: "Book not found." });
-    }
-    
-    res.status(200).json(updatedBook);
+    const updatedBook = await Book.findByIdAndUpdate(
+      req.params.id, 
+      req.body, // <--- This allows all schema fields through!
+      { new: true }
+    );
+    res.json(updatedBook);
   } catch (error) {
-    console.error("Error updating book:", error);
-    res.status(500).json({ message: "Failed to update the book." });
+    res.status(500).json({ error: "Failed to update book" });
   }
 });
 
