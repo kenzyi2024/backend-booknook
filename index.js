@@ -1,99 +1,47 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import Book from './models/Book.js'; // <-- 1. Import your new Book model
 
-// Load environment variables
+import { connectDB } from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+import bookRoutes from './routes/bookRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
+
 dotenv.config();
+
+if (!process.env.JWT_SECRET) {
+  console.error('❌ JWT_SECRET is not set in your .env file. Auth will not work.');
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// --- Middleware ---
-app.use(cors()); 
-app.use(express.json()); 
-
-// --- Database Connection ---
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB successfully!'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+// --- Core middleware ---
+// In dev, allow any origin. In prod, set CLIENT_URL (comma-separated) to lock it down.
+app.use(
+  cors(
+    process.env.CLIENT_URL
+      ? { origin: process.env.CLIENT_URL.split(',').map((s) => s.trim()) }
+      : {}
+  )
+);
+app.use(express.json());
 
 // --- Routes ---
-// The test route
-app.get('/api/books', async (req, res) => {
-  try {
-    const books = await Book.find().sort({ createdAt: -1 });
-    res.status(200).json(books);
-  } catch (error) {
-    console.error("Error fetching books:", error);
-    res.status(500).json({ message: "Failed to fetch books." });
-  }
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/books', bookRoutes);
+app.use('/api/ai', aiRoutes);
+
+// --- Error handling (must be last) ---
+app.use(notFound);
+app.use(errorHandler);
+
+// --- Start server only after the DB is connected ---
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
 });
-
-// <-- 2. NEW POST ROUTE: Save a book to the database -->
-app.post('/api/books', async (req, res) => {
-  try {
-    // Extract the book details sent over from React's req.body
-    const { title, author, genre, totalPages, coverColor } = req.body;
-
-    // Create a new MongoDB document using your Book blueprint
-    const newBook = new Book({
-      title,
-      author,
-      genre,
-      totalPages,
-      coverColor
-    });
-
-    // Save it permanently to the database
-    const savedBook = await newBook.save();
-
-    // Send a 201 (Created) success response back to React with the saved data
-    res.status(201).json(savedBook);
-    
-  } catch (error) {
-    console.error("Error saving book:", error);
-    // If something goes wrong (e.g., missing a required field), send an error response
-    res.status(500).json({ message: "Failed to save the book to the database.", error: error.message });
-  }
-});
-
-// <-- NEW PUT ROUTE: Update an existing book in the database -->
-app.put('/api/books/:id', async (req, res) => {
-  try {
-    const updatedBook = await Book.findByIdAndUpdate(
-      req.params.id, 
-      req.body, // <--- This allows all schema fields through!
-      { new: true }
-    );
-    res.json(updatedBook);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update book" });
-  }
-});
-
-// <-- NEW DELETE ROUTE: Remove a book from the database -->
-app.delete('/api/books/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedBook = await Book.findByIdAndDelete(id);
-    
-    if (!deletedBook) {
-      return res.status(404).json({ message: "Book not found." });
-    }
-    
-    res.status(200).json({ message: "Book deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting book:", error);
-    res.status(500).json({ message: "Failed to delete the book." });
-  }
-});
-
-console.log("🌟 THE NEW ROUTES ARE OFFICIALLY LOADED!");
-
-// --- Start the Server ---
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-});
-
