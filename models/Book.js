@@ -1,5 +1,45 @@
 import mongoose from 'mongoose';
 
+// A single logged reading session (page-based or audiobook).
+const sessionSchema = new mongoose.Schema(
+  {
+    date: { type: Date, default: Date.now },
+    endPage: { type: Number, default: 0 }, // page they reached this session
+    pagesRead: { type: Number, default: 0 }, // pages covered this session
+    percent: { type: Number, default: 0 }, // % of the whole book this session
+    minutes: { type: Number, default: 0 }, // optional time spent
+    format: { type: String, enum: ['page', 'pages', 'percent', 'audio'], default: 'page' },
+  },
+  { _id: true }
+);
+
+// A timestamped journal entry.
+const journalSchema = new mongoose.Schema(
+  {
+    date: { type: Date, default: Date.now },
+    text: { type: String, default: '' },
+  },
+  { _id: true }
+);
+
+// A saved quote tied to a page.
+const quoteSchema = new mongoose.Schema(
+  {
+    page: { type: Number, default: 0 },
+    text: { type: String, default: '' },
+  },
+  { _id: true }
+);
+
+// A persisted Socratic-seminar chat message.
+const chatSchema = new mongoose.Schema(
+  {
+    role: { type: String, enum: ['user', 'ai'], default: 'user' },
+    content: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 /**
  * A Book belongs to exactly one user.
  *
@@ -34,6 +74,17 @@ const bookSchema = new mongoose.Schema(
     currentPage: { type: Number, default: 0, min: 0 },
     rating: { type: Number, min: 0, max: 5 },
     notes: { type: String, default: '' },
+    finishedAt: { type: Date }, // set when the book is marked finished
+
+    // --- Audiobook support ---
+    isAudio: { type: Boolean, default: false },
+    audioDurationSec: { type: Number, default: 0 }, // total audiobook length
+
+    // --- Reading history & journal ---
+    sessions: [sessionSchema],
+    journalEntries: [journalSchema],
+    quotes: [quoteSchema],
+    seminarChat: [chatSchema],
 
     // --- Cached AI content (avoids re-calling Gemini) ---
     aiAnalysis: { type: String, default: '' },
