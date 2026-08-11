@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 
 const TOKEN_TTL = '7d';
+const googleClient = new OAuth2Client();
 
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: TOKEN_TTL });
@@ -51,6 +53,55 @@ export const login = async (req, res, next) => {
     }
 
     res.status(200).json({ token: signToken(user._id), user: user.toJSON() });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/auth/google  { credential }  → verify Google ID token, find/create user
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ message: 'Missing Google credential.' });
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ message: 'Google sign-in is not configured on the server.' });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const email = (payload.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ message: 'Google account has no email.' });
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        email,
+        name: payload.name || '',
+        profilePicture: payload.picture || '',
+        authProvider: 'google',
+      });
+    }
+
+    res.status(200).json({ token: signToken(user._id), user: user.toJSON() });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/auth/profile  (protected) — update name/username/picture/theme/decor
+export const updateProfile = async (req, res, next) => {
+  try {
+    const allowed = ['name', 'username', 'profilePicture', 'theme', 'shelfDecor'];
+    const updates = {};
+    allowed.forEach((k) => {
+      if (req.body[k] !== undefined) updates[k] = req.body[k];
+    });
+    const user = await User.findByIdAndUpdate(req.userId, updates, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.status(200).json(user.toJSON());
   } catch (err) {
     next(err);
   }
