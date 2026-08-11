@@ -1,0 +1,32 @@
+# cloudbuild.yaml — build BookNook backend from source (Google Cloud buildpacks,
+# no Dockerfile needed) and deploy it to Cloud Run in one step.
+#
+# This is the explicit, repo-versioned version of what your trigger already does.
+# To use it: Cloud Build → Triggers → (your backend trigger) → Edit →
+#   "Configuration" → Type: "Cloud Build configuration file (yaml or json)" →
+#   Location: /cloudbuild.yaml → Save.
+# After that, every push to main builds a fresh image AND deploys it, so you never
+# have to redeploy by hand.
+#
+# Env vars (GOOGLE_CLIENT_ID, MONGO_URI, JWT_SECRET, AI_API_KEY, …) are NOT set here.
+# They stay in the Cloud Run service config and are automatically preserved across
+# these deploys, so this file never overwrites your secrets.
+
+steps:
+  - id: build-and-deploy
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - backend-booknook
+      - --source=.
+      - --region=us-east4
+      - --platform=managed
+      - --allow-unauthenticated
+      - --quiet
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s
