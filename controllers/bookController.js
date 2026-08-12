@@ -12,6 +12,7 @@ const ALLOWED_FIELDS = [
   'totalPages',
   'coverColor',
   'coverUrl',
+  'spineColor',
   'status',
   'currentPage',
   'rating',

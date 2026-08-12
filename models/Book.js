@@ -64,6 +64,7 @@ const bookSchema = new mongoose.Schema(
     // --- Presentation ---
     coverColor: { type: String, default: 'bg-amber-700' },
     coverUrl: { type: String, default: '' },
+    spineColor: { type: String, default: '' }, // dominant color sampled from the cover, for spine tint
 
     // --- Reading state ---
     status: {
