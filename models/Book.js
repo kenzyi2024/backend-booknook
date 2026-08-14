@@ -51,6 +51,14 @@ const reflectionSchema = new mongoose.Schema(
         stage: { type: Number, default: 0 },
         text: { type: String, default: '' },
         date: { type: Date, default: Date.now },
+        // Later thoughts the reader adds to this same answer (append-only).
+        followUps: [
+          {
+            _id: false,
+            text: { type: String, default: '' },
+            date: { type: Date, default: Date.now },
+          },
+        ],
       },
     ],
   },
