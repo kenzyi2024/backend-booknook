@@ -8,6 +8,7 @@ const decorSchema = new mongoose.Schema(
     image: { type: String, default: '' }, // base64 (downscaled) for photos
     frame: { type: String, default: 'classic' },
     caption: { type: String, default: '' },
+    position: { type: Number, default: 0 }, // how many books precede it on the shelf
   },
   { _id: true }
 );

@@ -40,6 +40,23 @@ const chatSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Spaced-repetition reflection state (retrieval practice on the reader's notes).
+const reflectionSchema = new mongoose.Schema(
+  {
+    stage: { type: Number, default: 0 },
+    dueAt: { type: Date },
+    answers: [
+      {
+        _id: false,
+        stage: { type: Number, default: 0 },
+        text: { type: String, default: '' },
+        date: { type: Date, default: Date.now },
+      },
+    ],
+  },
+  { _id: false }
+);
+
 /**
  * A Book belongs to exactly one user.
  *
@@ -59,6 +76,7 @@ const bookSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     author: { type: String, required: true, trim: true },
     genre: { type: String, default: 'Fiction', trim: true },
+    moods: { type: [String], default: [] }, // reader "mood" tags — how the book felt
     totalPages: { type: Number, required: true, min: 1 },
 
     // --- Presentation ---
@@ -86,6 +104,7 @@ const bookSchema = new mongoose.Schema(
     journalEntries: [journalSchema],
     quotes: [quoteSchema],
     seminarChat: [chatSchema],
+    reflection: { type: reflectionSchema, default: null },
 
     // --- Cached AI content (avoids re-calling Gemini) ---
     aiAnalysis: { type: String, default: '' },
