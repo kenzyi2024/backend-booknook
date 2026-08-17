@@ -22,11 +22,15 @@ const journalSchema = new mongoose.Schema(
   { _id: true }
 );
 
-// A saved quote tied to a page.
+// A saved quote / annotation tied to a page, with an optional note, tags, and a
+// highlight color.
 const quoteSchema = new mongoose.Schema(
   {
     page: { type: Number, default: 0 },
     text: { type: String, default: '' },
+    note: { type: String, default: '' },
+    tags: { type: [String], default: [] },
+    color: { type: String, default: '' },
   },
   { _id: true }
 );
