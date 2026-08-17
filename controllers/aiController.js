@@ -4,7 +4,7 @@
  * Uses the OpenAI-compatible "chat completions" shape, which means you can point
  * it at almost any provider by changing three env vars:
  *   AI_BASE_URL  (default: Groq)
- *   AI_MODEL     (default: a Groq Llama model)
+ *   AI_MODEL     (default: Groq's openai/gpt-oss-120b)
  *   AI_API_KEY   (your provider key)
  *
  * Examples:
@@ -19,7 +19,9 @@ export const generate = async (req, res, next) => {
     // Read env at request time (not module load) so it works regardless of when
     // dotenv.config() runs relative to imports.
     const AI_BASE_URL = process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1';
-    const AI_MODEL = process.env.AI_MODEL || 'llama-3.3-70b-versatile';
+    // llama-3.3-70b-versatile is decommissioned by Groq on 2026-08-16; the
+    // recommended replacement is openai/gpt-oss-120b.
+    const AI_MODEL = process.env.AI_MODEL || 'openai/gpt-oss-120b';
     const AI_API_KEY = process.env.AI_API_KEY || process.env.GROQ_API_KEY;
 
     const prompt = (req.body.prompt || '').toString().trim();
