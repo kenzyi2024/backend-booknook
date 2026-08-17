@@ -26,6 +26,8 @@ const ALLOWED_FIELDS = [
   'quotes',
   'seminarChat',
   'reflection',
+  'characters',
+  'relationships',
   'aiAnalysis',
   'smartRecap',
   'recapPage',

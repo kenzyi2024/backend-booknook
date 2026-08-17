@@ -40,6 +40,32 @@ const chatSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// A character on the book's relationship map.
+const characterSchema = new mongoose.Schema(
+  {
+    _id: false,
+    id: { type: String },
+    name: { type: String, default: '' },
+    role: { type: String, default: '' },
+    note: { type: String, default: '' },
+    x: { type: Number },
+    y: { type: Number },
+  },
+  { _id: false }
+);
+
+// A labeled relationship between two characters (by their ids).
+const relationshipSchema = new mongoose.Schema(
+  {
+    _id: false,
+    id: { type: String },
+    from: { type: String },
+    to: { type: String },
+    label: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 // Spaced-repetition reflection state (retrieval practice on the reader's notes).
 const reflectionSchema = new mongoose.Schema(
   {
@@ -113,6 +139,8 @@ const bookSchema = new mongoose.Schema(
     quotes: [quoteSchema],
     seminarChat: [chatSchema],
     reflection: { type: reflectionSchema, default: null },
+    characters: [characterSchema],
+    relationships: [relationshipSchema],
 
     // --- Cached AI content (avoids re-calling Gemini) ---
     aiAnalysis: { type: String, default: '' },
