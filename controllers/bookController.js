@@ -28,6 +28,8 @@ const ALLOWED_FIELDS = [
   'reflection',
   'characters',
   'relationships',
+  'motifs',
+  'motifSynthesis',
   'aiAnalysis',
   'smartRecap',
   'recapPage',

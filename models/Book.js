@@ -40,6 +40,29 @@ const chatSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// A logged "sighting" of a motif at a page, with the reader's note.
+const sightingSchema = new mongoose.Schema(
+  {
+    _id: false,
+    id: { type: String },
+    page: { type: Number },
+    note: { type: String, default: '' },
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+// A tracked motif/symbol and everywhere the reader has spotted it.
+const motifSchema = new mongoose.Schema(
+  {
+    _id: false,
+    id: { type: String },
+    name: { type: String, default: '' },
+    sightings: [sightingSchema],
+  },
+  { _id: false }
+);
+
 // A character on the book's relationship map.
 const characterSchema = new mongoose.Schema(
   {
@@ -141,6 +164,8 @@ const bookSchema = new mongoose.Schema(
     reflection: { type: reflectionSchema, default: null },
     characters: [characterSchema],
     relationships: [relationshipSchema],
+    motifs: [motifSchema],
+    motifSynthesis: { type: String, default: '' },
 
     // --- Cached AI content (avoids re-calling Gemini) ---
     aiAnalysis: { type: String, default: '' },
