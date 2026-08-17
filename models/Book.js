@@ -138,6 +138,17 @@ const bookSchema = new mongoose.Schema(
     author: { type: String, required: true, trim: true },
     genre: { type: String, default: 'Fiction', trim: true },
     moods: { type: [String], default: [] }, // reader "mood" tags — how the book felt
+    // Opt-in content warnings, each graded by intensity.
+    contentWarnings: {
+      type: [
+        {
+          _id: false,
+          name: { type: String, default: '' },
+          level: { type: String, enum: ['minor', 'moderate', 'graphic'], default: 'moderate' },
+        },
+      ],
+      default: [],
+    },
     totalPages: { type: Number, required: true, min: 1 },
 
     // --- Presentation ---
@@ -154,6 +165,10 @@ const bookSchema = new mongoose.Schema(
     currentPage: { type: Number, default: 0, min: 0 },
     rating: { type: Number, min: 0, max: 5 },
     notes: { type: String, default: '' },
+    // Series grouping + to-be-read priority
+    series: { type: String, default: '', trim: true },
+    seriesIndex: { type: Number, default: null },
+    tbrRank: { type: Number, default: null },
     finishedAt: { type: Date }, // set when the book is marked finished
 
     // --- Audiobook support ---
