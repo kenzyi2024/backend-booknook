@@ -22,6 +22,7 @@ const ALLOWED_FIELDS = [
   'series',
   'seriesIndex',
   'tbrRank',
+  'tbrMonth',
   'finishedAt',
   'isAudio',
   'audioDurationSec',

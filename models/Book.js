@@ -169,6 +169,7 @@ const bookSchema = new mongoose.Schema(
     series: { type: String, default: '', trim: true },
     seriesIndex: { type: Number, default: null },
     tbrRank: { type: Number, default: null },
+    tbrMonth: { type: String, default: '' }, // 'YYYY-MM' reading-plan bucket ('' = unscheduled)
     finishedAt: { type: Date }, // set when the book is marked finished
 
     // --- Audiobook support ---
