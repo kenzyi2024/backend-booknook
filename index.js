@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -18,6 +19,10 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Behind Cloud Run's proxy — trust the first hop so rate limiting keys on the
+// real client IP (from X-Forwarded-For) rather than the proxy.
+app.set('trust proxy', 1);
+
 // --- Core middleware ---
 // In dev, allow any origin. In prod, set CLIENT_URL (comma-separated) to lock it down.
 app.use(
@@ -29,8 +34,30 @@ app.use(
 );
 app.use(express.json());
 
+// --- Rate limiters ---
+// Sign-in / sign-up: throttle to blunt brute-force and credential stuffing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please wait a few minutes and try again.' },
+});
+// AI proxy: cap per-user/IP bursts so no one can run up provider costs.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'You are sending requests too quickly — please slow down.' },
+});
+
 // --- Routes ---
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google', authLimiter);
+app.use('/api/ai', aiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/ai', aiRoutes);
