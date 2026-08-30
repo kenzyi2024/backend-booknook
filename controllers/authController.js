@@ -24,6 +24,10 @@ export const register = async (req, res, next) => {
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters.' });
     }
+    if (password.length > 72) {
+      // bcrypt silently truncates beyond 72 bytes — reject rather than mislead.
+      return res.status(400).json({ message: 'Password must be 72 characters or fewer.' });
+    }
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -74,6 +78,11 @@ export const googleLogin = async (req, res, next) => {
     const payload = ticket.getPayload();
     const email = (payload.email || '').toLowerCase();
     if (!email) return res.status(400).json({ message: 'Google account has no email.' });
+    // Only trust a verified Google email — otherwise a token bearing an
+    // unverified address could be used to log into a matching local account.
+    if (payload.email_verified === false) {
+      return res.status(401).json({ message: 'Your Google email is not verified.' });
+    }
 
     let user = await User.findOne({ email });
     if (!user) {
@@ -126,6 +135,9 @@ export const changePassword = async (req, res, next) => {
 
     if (newPassword.length < 6) {
       return res.status(400).json({ message: 'New password must be at least 6 characters.' });
+    }
+    if (newPassword.length > 72) {
+      return res.status(400).json({ message: 'New password must be 72 characters or fewer.' });
     }
     if (newPassword === currentPassword) {
       return res.status(400).json({ message: 'New password must be different from the current one.' });

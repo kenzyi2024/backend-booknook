@@ -17,7 +17,7 @@ const sessionSchema = new mongoose.Schema(
 const journalSchema = new mongoose.Schema(
   {
     date: { type: Date, default: Date.now },
-    text: { type: String, default: '' },
+    text: { type: String, default: '', maxlength: 20000 },
   },
   { _id: true }
 );
@@ -27,8 +27,8 @@ const journalSchema = new mongoose.Schema(
 const quoteSchema = new mongoose.Schema(
   {
     page: { type: Number, default: 0 },
-    text: { type: String, default: '' },
-    note: { type: String, default: '' },
+    text: { type: String, default: '', maxlength: 5000 },
+    note: { type: String, default: '', maxlength: 5000 },
     tags: { type: [String], default: [] },
     color: { type: String, default: '' },
   },
@@ -39,7 +39,7 @@ const quoteSchema = new mongoose.Schema(
 const chatSchema = new mongoose.Schema(
   {
     role: { type: String, enum: ['user', 'ai'], default: 'user' },
-    content: { type: String, default: '' },
+    content: { type: String, default: '', maxlength: 12000 },
   },
   { _id: false }
 );
@@ -164,7 +164,7 @@ const bookSchema = new mongoose.Schema(
     },
     currentPage: { type: Number, default: 0, min: 0 },
     rating: { type: Number, min: 0, max: 5 },
-    notes: { type: String, default: '' },
+    notes: { type: String, default: '', maxlength: 20000 },
     // Series grouping + to-be-read priority
     series: { type: String, default: '', trim: true },
     seriesIndex: { type: Number, default: null },
@@ -177,19 +177,19 @@ const bookSchema = new mongoose.Schema(
     audioDurationSec: { type: Number, default: 0 }, // total audiobook length
 
     // --- Reading history & journal ---
-    sessions: [sessionSchema],
-    journalEntries: [journalSchema],
-    quotes: [quoteSchema],
-    seminarChat: [chatSchema],
+    sessions: { type: [sessionSchema], validate: [(a) => a.length <= 5000, 'Too many sessions.'] },
+    journalEntries: { type: [journalSchema], validate: [(a) => a.length <= 2000, 'Too many journal entries.'] },
+    quotes: { type: [quoteSchema], validate: [(a) => a.length <= 2000, 'Too many quotes.'] },
+    seminarChat: { type: [chatSchema], validate: [(a) => a.length <= 1000, 'Chat is too long.'] },
     reflection: { type: reflectionSchema, default: null },
-    characters: [characterSchema],
-    relationships: [relationshipSchema],
-    motifs: [motifSchema],
-    motifSynthesis: { type: String, default: '' },
+    characters: { type: [characterSchema], validate: [(a) => a.length <= 300, 'Too many characters.'] },
+    relationships: { type: [relationshipSchema], validate: [(a) => a.length <= 600, 'Too many relationships.'] },
+    motifs: { type: [motifSchema], validate: [(a) => a.length <= 300, 'Too many motifs.'] },
+    motifSynthesis: { type: String, default: '', maxlength: 20000 },
 
-    // --- Cached AI content (avoids re-calling Gemini) ---
-    aiAnalysis: { type: String, default: '' },
-    smartRecap: { type: String, default: '' },
+    // --- Cached AI content (avoids re-calling the model) ---
+    aiAnalysis: { type: String, default: '', maxlength: 20000 },
+    smartRecap: { type: String, default: '', maxlength: 20000 },
     recapPage: { type: Number, default: 0 },
   },
   { timestamps: true }

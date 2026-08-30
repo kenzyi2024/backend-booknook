@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 
@@ -24,6 +25,8 @@ const PORT = process.env.PORT || 5001;
 app.set('trust proxy', 1);
 
 // --- Core middleware ---
+// Security headers. This is a JSON API (no served HTML), so CSP/COEP aren't needed.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 // In dev, allow any origin. In prod, set CLIENT_URL (comma-separated) to lock it down.
 app.use(
   cors(
