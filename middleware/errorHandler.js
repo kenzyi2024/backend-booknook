@@ -10,9 +10,11 @@ export const notFound = (req, res) => {
 export const errorHandler = (err, req, res, next) => {
   console.error('❌ Error:', err.message);
 
-  // Invalid ObjectId in the URL (e.g. /api/books/undefined)
+  // Invalid ObjectId in the URL (e.g. /api/books/undefined), or a field value
+  // of the wrong type in the body (e.g. a non-numeric page count).
   if (err.name === 'CastError') {
-    return res.status(400).json({ message: 'Invalid book id.' });
+    const message = err.path === '_id' ? 'Invalid book id.' : `Invalid value for ${err.path}.`;
+    return res.status(400).json({ message });
   }
 
   // Duplicate key from the { owner, title } unique index

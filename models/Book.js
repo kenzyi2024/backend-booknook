@@ -170,7 +170,10 @@ const bookSchema = new mongoose.Schema(
     seriesIndex: { type: Number, default: null },
     tbrRank: { type: Number, default: null },
     tbrMonth: { type: String, default: '' }, // 'YYYY-MM' reading-plan bucket ('' = unscheduled)
-    finishedAt: { type: Date }, // set when the book is marked finished
+    // Reading dates are calendar days, stored as UTC midnight ('YYYY-MM-DD' from
+    // the client). Both optional; see lib/readingDates.js for validation.
+    startedAt: { type: Date, default: null },
+    finishedAt: { type: Date }, // legacy books may hold a full timestamp here
 
     // --- Audiobook support ---
     isAudio: { type: Boolean, default: false },
@@ -186,6 +189,10 @@ const bookSchema = new mongoose.Schema(
     relationships: { type: [relationshipSchema], validate: [(a) => a.length <= 600, 'Too many relationships.'] },
     motifs: { type: [motifSchema], validate: [(a) => a.length <= 300, 'Too many motifs.'] },
     motifSynthesis: { type: String, default: '', maxlength: 20000 },
+
+    // Spoiler-free summary of the book (from a recommendation, generated on
+    // request, or written by the reader). Shown in the book's overview.
+    summary: { type: String, default: '', maxlength: 20000 },
 
     // --- Cached AI content (avoids re-calling the model) ---
     aiAnalysis: { type: String, default: '', maxlength: 20000 },

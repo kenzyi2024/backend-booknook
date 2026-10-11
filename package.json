@@ -8,7 +8,8 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "migrate:owner": "node scripts/migrate-owner.js",
-    "reset:books": "node scripts/reset-books.js"
+    "reset:books": "node scripts/reset-books.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

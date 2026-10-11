@@ -1,4 +1,5 @@
 import Book from '../models/Book.js';
+import { applyReadingDates } from '../lib/readingDates.js';
 
 /**
  * Fields a client is allowed to set/change. Anything else in req.body
@@ -23,7 +24,9 @@ const ALLOWED_FIELDS = [
   'seriesIndex',
   'tbrRank',
   'tbrMonth',
+  'startedAt',
   'finishedAt',
+  'summary',
   'isAudio',
   'audioDurationSec',
   'sessions',
@@ -61,7 +64,7 @@ export const getBooks = async (req, res, next) => {
 // POST /api/books  → create a book owned by the signed-in user
 export const createBook = async (req, res, next) => {
   try {
-    const data = pick(req.body, ALLOWED_FIELDS);
+    const data = applyReadingDates(pick(req.body, ALLOWED_FIELDS));
     const book = await Book.create({ ...data, owner: req.userId });
     res.status(201).json(book);
   } catch (err) {
@@ -73,6 +76,17 @@ export const createBook = async (req, res, next) => {
 export const updateBook = async (req, res, next) => {
   try {
     const updates = pick(req.body, ALLOWED_FIELDS);
+
+    // Reading dates are validated against the stored value of whichever one
+    // isn't being changed, so a lone finish date can't land before the start.
+    if ('startedAt' in updates || 'finishedAt' in updates) {
+      const existing = await Book.findOne({ _id: req.params.id, owner: req.userId })
+        .select('startedAt finishedAt')
+        .lean();
+      if (!existing) return res.status(404).json({ message: 'Book not found.' });
+      applyReadingDates(updates, existing);
+    }
+
     const book = await Book.findOneAndUpdate(
       { _id: req.params.id, owner: req.userId }, // ownership enforced in the query
       updates,
